@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <style>
+            h1 {
+                color: cornflowerblue ;
+                text-decoration: underline;
+                text-align: center;
+                margin-left: 70px; /* Adjust the distance from the logo */
+            }
+
+            .logo {
+                width: 60px; /* Adjust the width as needed */
+                position: absolute;
+                top: 10px; /* Adjust the distance from the top */
+                left: 10px; /* Adjust the distance from the left */
+            }
+            
+            .logo1 {
+                width: 60px; /* Adjust the width as needed */
+                position: absolute;
+                top: 10px; /* Adjust the distance from the top */
+                right: 10px; /* Adjust the distance from the left */
+            }
+
+            .container {
+                position: relative;
+            }
+        </style>
+        <title>HOTSPOT VISUALIZER</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="style.css" type="text/css">
+    </head>
+
+    <body>
+        <div class="container">
+            <img src="isro.png" class="logo1">
+            <img src="NRSC.jpg" class="logo">
+            <h1>HOTSPOT VISUALIZATION</h1><br>
+            <form id="myForm" >
+                <div class="form-group">
+                    <label for="states">Select a State:</label>
+                    <select name="states" id="states" class="form-control">
+                        <!-- Options will be dynamically populated here -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="district">Select a District:</label>
+                    <select name="district" id="district" class="form-control">
+                        <!-- Options will be dynamically populated here -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="start-date">Start Date:</label>
+                    <input type="date" id="start-date" class="form-control" value="2023-06-23">
+                </div>
+                <div class="form-group">
+                    <label for="end-date">End Date:</label>
+                    <input type="date" id="end-date" class="form-control" value="2023-07-23">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <div>
+                    <img src="" id="image1" alt="hotspot1" width="1120" height="500">
+                </div>
+            </form>
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                var statesSelect = document.getElementById('states');
+                var districtsSelect = document.getElementById('district');
+                var startDateInput = document.getElementById('start-date');
+                var endDateInput = document.getElementById('end-date');
+
+                populateStates();
+
+                function populateStates() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'http://localhost:8080/states', true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+
+                            // Clear previous options
+                            statesSelect.innerHTML = '';
+
+                            // Populate new options
+                            response.forEach(function (item) {
+                                var stateName = item.statename;
+
+                                // Check if the option already exists
+                                if (!optionExists(statesSelect, stateName)) {
+                                    var stateOption = document.createElement('option');
+                                    stateOption.value = stateName;
+                                    stateOption.textContent = stateName;
+                                    statesSelect.appendChild(stateOption);
+                                }
+                            });
+                        }
+                    };
+                    xhr.send();
+                }
+
+                statesSelect.addEventListener('click', function () {
+                    var selectedState = statesSelect.value;
+                    populateDistricts(selectedState);
+                });
+
+                function populateDistricts(selectedState) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'http://localhost:8080/states/' + encodeURIComponent(selectedState), true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+
+                            // Clear previous options
+                            districtsSelect.innerHTML = '';
+
+                            // Populate new options
+                            response.forEach(function (item) {
+                                var districtName = item.districtname;
+
+                                // Check if the option already exists
+                                if (!optionExists(districtsSelect, districtName)) {
+                                    var districtOption = document.createElement('option');
+                                    districtOption.value = districtName;
+                                    districtOption.textContent = districtName;
+                                    districtsSelect.appendChild(districtOption);
+                                }
+                            });
+                        }
+                    };
+                    xhr.send();
+                }
+
+                function optionExists(selectElement, optionValue) {
+                    for (var i = 0; i < selectElement.options.length; i++) {
+                        if (selectElement.options[i].value === optionValue) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                $('#myForm').submit(function (event) {
+                    event.preventDefault(); // Prevent the form from submitting normally
+                    var selectedState = statesSelect.value;
+                    var selectedDistrict = districtsSelect.value;
+                    var startDate = startDateInput.value;
+                    var endDate = endDateInput.value;
+
+                    // Perform any desired action with the selected state, district, start date, and end date
+                    console.log('Selected State:', selectedState);
+                    console.log('Selected District:', selectedDistrict);
+                    console.log('Start Date:', startDate);
+                    console.log('End Date:', endDate);
+
+                    populateHotspots(selectedState, selectedDistrict, startDate, endDate);
+
+                    function populateHotspots(selectedState, selectedDistrict, startDate, endDate) {
+                        $.ajax({
+                            url: 'http://localhost:8080/geturl/' + encodeURIComponent(selectedDistrict),
+                            data: {
+                                startDate: startDate,
+                                endDate: endDate
+                            },
+                            method: 'GET',
+                            /* success: function (response) {
+                             var imageUrls = response;
+                             
+                             // Get references to the image elements
+                             var image1 = document.getElementById('image1');
+                             alert(imageUrls[0]);
+                             // Set the source attribute of the image elements with the image URLs
+                             if (imageUrls.length >= 1) {
+                             image1.src = imageUrls[0];
+                             }
+                             },*/
+                            success: function (response) {
+                                var base64Images = response;
+
+                                // Get reference to the image element
+                                var image1 = document.getElementById('image1');
+
+                                // Set the source attribute of the image element with the base64-encoded image data
+                                if (base64Images.length >= 1) {
+                                    image1.src = 'data:image/png;base64,' + base64Images[0];
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.log('Error:', error);
+                            }
+                        });
+                    }
+
+                    // Reset the form
+                    this.reset();
+                });
+
+            });
+        </script>
+    </body>
+</html>
+
+
+
